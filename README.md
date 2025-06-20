@@ -143,9 +143,4 @@ Focus Guardian is built to be privacy-conscious:
 
 ## 📄 License
 
-MIT License.
 Built with ❤️ by Assem — for focus, not surveillance.
-
----
-
-Would you like a **badge version** (with shields.io), or a **live deployed demo README** if you plan to launch on Vercel or Render?

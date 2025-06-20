@@ -144,7 +144,7 @@ Focus Guardian is built to be privacy-conscious:
 ## 📄 License
 
 MIT License.
-Built with ❤️ by \[Your Name] — for focus, not surveillance.
+Built with ❤️ by \Assem — for focus, not surveillance.
 
 ---
 

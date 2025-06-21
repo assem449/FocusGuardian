@@ -1,21 +1,41 @@
 import React, { useState } from "react";
+import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import Home from "./pages/Home";
 import History from "./pages/History";
+import TopStatusBar from "./components/TopStatusBar";
+import BottomActionsBar from "./components/BottomActionsBar";
 
 export default function App() {
-  const [page, setPage] = useState("home");
+  const [statusProps, setStatusProps] = useState({
+    status: "focused",
+    confidence: 1,
+    focusScore: 100,
+    focusScoreLabel: "Session not started",
+    sessionStart: Date.now(),
+    time: new Date(),
+    blinkRate: 0,
+  });
+
+  const location = useLocation();
+  const navigate = useNavigate();
+  const currentPage = location.pathname === "/history" ? "history" : "home";
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-start py-8">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold text-blue-700">🛡️ Focus Guardian</h1>
-        <nav className="mt-4 flex gap-4">
-          <button className={`px-4 py-2 rounded ${page === 'home' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`} onClick={() => setPage("home")}>Home</button>
-          <button className={`px-4 py-2 rounded ${page === 'history' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`} onClick={() => setPage("history")}>History</button>
-        </nav>
-      </header>
-      <main className="w-full max-w-xl">
-        {page === "home" ? <Home /> : <History />}
-      </main>
-    </div>
+    <>
+      <TopStatusBar
+        {...statusProps}
+        page={currentPage}
+        setPage={(p) => navigate(p === "home" ? "/" : "/history")}
+      />
+      <div className="flex flex-col min-h-screen bg-gray-50 pt-20 pb-16">
+        <main className="flex-1 w-full max-w-5xl mx-auto px-4">
+          <Routes>
+            <Route path="/" element={<Home setStatusProps={setStatusProps} />} />
+            <Route path="/history" element={<History />} />
+          </Routes>
+        </main>
+      </div>
+      <BottomActionsBar />
+    </>
   );
-} 
+}

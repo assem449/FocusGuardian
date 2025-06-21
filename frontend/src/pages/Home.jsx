@@ -25,6 +25,37 @@ function handActivityBadge(hand_activity) {
   );
 }
 
+function WarningModal({ onDismiss, hand_activity }) {
+  const handDistracted = hand_activity && ["fidgeting", "touching_face", "phone"].includes(hand_activity.gesture);
+  return (
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
+      <div className="bg-white rounded shadow-lg p-6 max-w-sm w-full text-center">
+        <div className="text-2xl mb-4">⚠️ You seem distracted.</div>
+        <div className="mb-6">Want to take a short break?</div>
+        {handDistracted && (
+          <div className="mb-4 text-red-600 font-semibold">Your hand movement indicates potential distraction.</div>
+        )}
+        <button className="bg-gray-300 px-4 py-2 rounded mr-2 hover:bg-gray-400" onClick={onDismiss}>Dismiss</button>
+        <button className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" onClick={onDismiss}>Snooze</button>
+      </div>
+    </div>
+  );
+}
+
+function WebcamStream({ videoRef }) {
+  useEffect(() => {
+    let stream;
+    navigator.mediaDevices.getUserMedia({ video: true }).then((s) => {
+      stream = s;
+      if (videoRef.current) videoRef.current.srcObject = stream;
+    });
+    return () => {
+      if (stream) stream.getTracks().forEach((t) => t.stop());
+    };
+  }, [videoRef]);
+  return null;
+}
+
 export default function Home({ setStatusProps }) {
   const videoRef = useRef(null);
   const [prediction, setPrediction] = useState(null);
@@ -48,6 +79,10 @@ export default function Home({ setStatusProps }) {
     setShowWarning(false);
     setPrediction(null);
     setHandActivity(null);
+  };
+
+  const handleDismissWarning = () => {
+    setShowWarning(false);
   };
 
   useEffect(() => {
@@ -106,29 +141,13 @@ export default function Home({ setStatusProps }) {
     return () => clearInterval(intervalRef.current);
   }, [monitoring, sessionStart, setStatusProps]);
 
-  const now = new Date();
-  const sessionStartDate = new Date(sessionStart);
-  const sessionDuration = Math.floor((now - sessionStartDate) / 1000);
-
-  const statusProps = prediction ? {
-    status: prediction.state,
-    confidence: prediction.confidence,
-    focusScore: prediction.focus_score || 65,
-    focusScoreLabel: "Above average for this time",
-    sessionStart: sessionStart,
-    time: now,
-    blinkRate: handActivity?.blink_rate,
-  } : {
-    status: "Not started",
-    confidence: 1,
-    focusScore: 0,
-    focusScoreLabel: "",
-    sessionStart: now.getTime(),
-    time: now,
-    blinkRate: 0,
-  };
-
   return (
+    <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Focus Monitoring</h1>
+        <p className="text-gray-600">Real-time focus tracking with webcam analysis</p>
+      </div>
+      
       <div className="flex flex-col items-center gap-6">
         <video
           ref={videoRef}
@@ -136,21 +155,22 @@ export default function Home({ setStatusProps }) {
           playsInline
           width={320}
           height={240}
-          className="rounded shadow"
+          className="rounded-lg shadow-lg"
           style={{ background: "#222" }}
         />
+        
         <div className="flex gap-4">
           {!monitoring ? (
             <button
-              className="bg-blue-600 text-white px-6 py-2 rounded font-semibold hover:bg-blue-700"
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
               onClick={handleStartSession}
               disabled={loading}
             >
-              {loading ? "Analyzing..." : "Start Session"}
+              {loading ? "Analyzing..." : "Start Monitoring"}
             </button>
           ) : (
             <button
-              className="bg-red-600 text-white px-6 py-2 rounded font-semibold hover:bg-red-700"
+              className="bg-red-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-red-700 transition-colors"
               onClick={handleStopSession}
             >
               Stop Monitoring
@@ -159,60 +179,32 @@ export default function Home({ setStatusProps }) {
         </div>
 
         {prediction && (
-          <div className="w-full bg-white rounded shadow p-4 mt-4">
-            <div className="flex items-center mb-2">
-              <h2 className="text-xl font-bold">Prediction: {prediction.state}</h2>
+          <div className="w-full max-w-2xl bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center mb-4">
+              <h2 className="text-xl font-bold text-gray-900">Prediction: {prediction.state}</h2>
               {handActivityBadge(prediction.hand_activity)}
             </div>
-            <p className="mb-1">Confidence: <b>{Math.round(prediction.confidence * 100)}%</b></p>
-            <ul className="mb-2">
+            <p className="mb-3 text-gray-600">Confidence: <span className="font-bold text-blue-600">{Math.round(prediction.confidence * 100)}%</span></p>
+            <ul className="mb-4 space-y-1">
               {prediction.reasons.map((r, i) => (
-                <li key={i}>- {r}</li>
+                <li key={i} className="text-gray-700">• {r}</li>
               ))}
             </ul>
-            <div className="bg-blue-50 border-l-4 border-blue-400 p-2">{prediction.nudge}</div>
+            <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg">
+              <p className="text-blue-800 font-medium">{prediction.nudge}</p>
+            </div>
           </div>
         )}
 
         {showWarning && (
           <WarningModal
-            onDismiss={() => setShowWarning(false)}
+            onDismiss={handleDismissWarning}
             hand_activity={prediction?.hand_activity}
           />
         )}
-
-        <WebcamStream videoRef={videoRef} />
       </div>
-  );
-}
-
-function WebcamStream({ videoRef }) {
-  useEffect(() => {
-    let stream;
-    navigator.mediaDevices.getUserMedia({ video: true }).then((s) => {
-      stream = s;
-      if (videoRef.current) videoRef.current.srcObject = stream;
-    });
-    return () => {
-      if (stream) stream.getTracks().forEach((t) => t.stop());
-    };
-  }, [videoRef]);
-  return null;
-}
-
-function WarningModal({ onDismiss, hand_activity }) {
-  const handDistracted = hand_activity && ["fidgeting", "touching_face", "phone"].includes(hand_activity.gesture);
-  return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-      <div className="bg-white rounded shadow-lg p-6 max-w-sm w-full text-center">
-        <div className="text-2xl mb-4">⚠️ You seem distracted.</div>
-        <div className="mb-6">Want to take a short break?</div>
-        {handDistracted && (
-          <div className="mb-4 text-red-600 font-semibold">Your hand movement indicates potential distraction.</div>
-        )}
-        <button className="bg-gray-300 px-4 py-2 rounded mr-2 hover:bg-gray-400" onClick={onDismiss}>Dismiss</button>
-        <button className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" onClick={onDismiss}>Snooze</button>
-      </div>
+      
+      <WebcamStream videoRef={videoRef} />
     </div>
   );
 }

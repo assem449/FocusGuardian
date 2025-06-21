@@ -36,13 +36,31 @@ export default function TopStatusBar({
         <span className="text-xl font-bold text-blue-700 tracking-tight">🛡️ Focus Guardian</span>
         <div className="ml-4 flex gap-2">
           <button
-            className={`px-4 py-2 rounded ${page === "home" ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-700"}`}
-            onClick={() => setPage("home")}
+            className={`px-4 py-2 rounded text-sm font-medium transition-colors ${
+              page === "dashboard" 
+                ? "bg-blue-600 text-white" 
+                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+            }`}
+            onClick={() => setPage("dashboard")}
           >
-            Home
+            Dashboard
           </button>
           <button
-            className={`px-4 py-2 rounded ${page === "history" ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-700"}`}
+            className={`px-4 py-2 rounded text-sm font-medium transition-colors ${
+              page === "home" 
+                ? "bg-blue-600 text-white" 
+                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+            }`}
+            onClick={() => setPage("home")}
+          >
+            Monitor
+          </button>
+          <button
+            className={`px-4 py-2 rounded text-sm font-medium transition-colors ${
+              page === "history" 
+                ? "bg-blue-600 text-white" 
+                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+            }`}
             onClick={() => setPage("history")}
           >
             History
